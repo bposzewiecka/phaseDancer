@@ -1,7 +1,7 @@
 import os
 from src.utils.text_utils import get_prev_number, get_range
-from src.scripts.clustering import cluster_and_extract_reads
-from src.scripts.reference_extention import extend_contig
+from src.scripts.read_clustering_and_extraction import cluster_and_extract_reads
+from src.scripts.reference_extension import extend_contig
 from src.scripts.merge_contigs import merge_contigs
 
 from src.utils.yaml_utils import load_yaml
