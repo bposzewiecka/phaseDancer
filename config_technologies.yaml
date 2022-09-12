@@ -1,0 +1,10 @@
+technology:
+   ont:
+      minimap2-preset: 'map-ont'
+      wtdgb2-preset: 'ont'
+   hifi:
+      minimap2-preset: 'map-hifi'
+      wtdbg2-preset: 'ccs'
+   pb:
+      minimap2-preset: 'map-pb'
+      wtdbg2-preset: 'sq'
