@@ -5,7 +5,7 @@ from src.scripts.reference_extension import extend_contig
 from src.scripts.merge_contigs import merge_contigs
 
 from src.utils.yaml_utils import load_yaml
-from src.config.configuration import snakemake_validate_config, TECHNOLOGIES_CONFIG_FN, CONFIG_FN, get_number_of_indices
+from src.utils.configuration import snakemake_validate_config, TECHNOLOGIES_CONFIG_FN, CONFIG_FN, get_number_of_indices
 
 def recursive_input(input_file):
 
@@ -27,7 +27,7 @@ configfile: OUTPUT_DIR + CONFIG_FN
 
 config_technologies = load_yaml(TECHNOLOGIES_CONFIG_FN)
 
-errors = snakemake_validate_config(CONFIG_FN, check_files = False)
+errors = snakemake_validate_config(OUTPUT_DIR + CONFIG_FN, check_files = False)
 
 ruleorder:
     copy_first_fasta > clusterng_cluster_selection_read_extraction
@@ -229,10 +229,8 @@ rule clusterng_cluster_selection_read_extraction:
 	extension_size = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/clusters/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.extension_size.yaml',
     params:
         prev_selected_cluster = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.selected_cluster.yaml'),
-        prev_selected_cluster2 = recursive_input2(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.selected_cluster.yaml'),
 	prev_colored_bam = recursive_input(OUTPUT_DIR +  'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.bam'),
-        prev_clusters = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv'),
-        prev_clusters2 = recursive_input2(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv')
+        prev_clusters = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv')
     run:
         try:
             cluster_and_extract_reads(int(wildcards.number), {**input, **output, **params})

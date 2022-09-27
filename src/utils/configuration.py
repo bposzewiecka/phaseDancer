@@ -57,7 +57,7 @@ def mappings_validation(key, value, message_prefix):  # pylint: disable=unused-a
     errors = []
 
     for i, ref in enumerate(value):
-        if isinstance(ref, str):
+        if not isinstance(ref, str):
             errors.append(
                 f'{message_prefix} {i}-th element of "mapping" should (0-base) be a string.'
             )
@@ -160,6 +160,15 @@ properties = [
         default_value=[],
         validation=mappings_validation,
     ),
+    Property(
+        name="number-of-indices",
+        level="sample",
+        prop_types=[int],
+        sample_required=True,
+        contig_required=False,
+        default_value=[],
+        validation=positive_integer,
+    ),
 ]
 
 properties_dict = {prop.name: prop for prop in properties}
@@ -193,12 +202,12 @@ type_info = {
 
 
 def load_config(config_fn):
-    try:
-        return load_yaml(config_fn)
-    except BaseException as exp:
-        raise Exception(
-            f'Problem with loading the configuration file "{config_fn}".'
-        ) from exp
+    # try:
+    return load_yaml(config_fn)
+    # except BaseException as exp:
+    #    raise Exception(
+    #        f'Problem with loading the configuration file "{config_fn}".'
+    #    ) from exp
 
 
 def get_value(key, contig, sample):
@@ -260,7 +269,7 @@ def validate_values(obj, message_prefix):
 
 def validate_props(obj_name, obj, obj_keys, message_prefix, level):
 
-    if isinstance(obj, dict):
+    if not isinstance(obj, dict):
         return [f"{message_prefix} Configuration should be a dictionary."]
 
     errors = validate_name(obj_name, message_prefix, level)
@@ -353,14 +362,8 @@ def validate_contig_level(contig, sample, message_prefix):
     if errors:
         return errors
 
-    if (
-        get_value("iterations-left", contig, sample)
-        + get_value("iterations-right", contig, sample)
-        == 0
-    ):
-        errors.append(
-            f'{message_prefix} "iterations-right" or "iterations-left" should not be 0.'
-        )
+    if get_value("iterations", contig, sample) == 0:
+        errors.append(f'{message_prefix} "iterations" should be greater then 0.')
 
     return errors
 
@@ -434,13 +437,13 @@ def validate_config(config_fn, check_files=True):
 
     config = load_config(config_fn)
 
-    if isinstance(config, dict):
+    if not isinstance(config, dict):
         return [f"Config file {config_fn} should be a dictionary."]
 
     if "samples" not in config or len(config) != 1:
         return ['Configuration should have one root key "samples".']
 
-    if isinstance(config["samples"], dict):
+    if not isinstance(config["samples"], dict):
         return ['Value of root key "samples" should be a dictionary.']
 
     errors = []
