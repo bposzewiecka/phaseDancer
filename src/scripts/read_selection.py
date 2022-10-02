@@ -58,9 +58,15 @@ def get_extension_size(read_ends):
 
     read_ends.sort()
 
-    extension_size = read_ends[-MIN_COVERAGE_FOR_EXTENSION] // 1000 * 1000
+    print("Read ends length", read_ends)
 
-    return max(extension_size, MIN_EXTENSION_SIZE)
+    if len(read_ends) >= MIN_COVERAGE_FOR_EXTENSION:
+        return max(
+            read_ends[-MIN_COVERAGE_FOR_EXTENSION] // 1000 * 1000 - 1000,
+            MIN_EXTENSION_SIZE,
+        )
+
+    return MIN_EXTENSION_SIZE
 
 
 def get_trimmed_reads_fasta(bam_fn, selected_reads, start, end, split_mode):
@@ -85,12 +91,12 @@ def get_trimmed_reads_fasta(bam_fn, selected_reads, start, end, split_mode):
             if read.query_name not in selected_reads:
                 continue
 
-            print(
-                read.reference_start,
-                read.reference_end,
-                read.cigartuples[0],
-                read.cigartuples[-1],
-            )
+            # print(
+            #    read.reference_start,
+            #    read.reference_end,
+            #    read.cigartuples[0],
+            #    read.cigartuples[-1],
+            # )
 
             if read.is_secondary or read.is_supplementary:
                 continue
@@ -100,7 +106,7 @@ def get_trimmed_reads_fasta(bam_fn, selected_reads, start, end, split_mode):
                 and read.cigartuples[0][0] == BAM_CSOFT_CLIP
                 and read.cigartuples[0][1] > 50
             ):
-                print("Begining", read.reference_start, read.cigartuples[0][1])
+                # print("Begining", read.reference_start, read.cigartuples[0][1])
 
                 continue
 
@@ -109,20 +115,20 @@ def get_trimmed_reads_fasta(bam_fn, selected_reads, start, end, split_mode):
                 and read.cigartuples[-1][0] == BAM_CSOFT_CLIP
                 and read.cigartuples[-1][1] > 50
             ):
-                print("End", read.reference_end, read.cigartuples[-1][1])
+                # print("End", read.reference_end, read.cigartuples[-1][1])
                 continue
 
             if (
                 read.reference_start > 100
                 and reference_length - read.reference_end > 100
             ):
-                print("In the middle")
+                # print("In the middle")
                 continue
 
             try:
                 _, seq1, seq2 = split_by_reference_coordinate(read, split_coordinate)
             except Exception:  # pylint: disable=broad-except
-                print("Exception")
+                # print("Exception")
                 continue
 
             seq = seq1[start - split_coordinate :] + seq2[: end + split_coordinate]

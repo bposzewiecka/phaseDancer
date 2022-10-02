@@ -18,6 +18,6 @@ class Partition:
         return self.alignment.get_coords(bases_freq_threshold, self)
 
     def get_sub_arr(self, coords):
-        sub_arr = self.alignment.arr[sorted(self.reads)]
+        sub_arr = self.alignment.arr[self.reads]
         sub_arr = sub_arr[:, coords]
         return sub_arr

@@ -68,15 +68,13 @@ def get_alignment_on_reference(read, reference_size):
 
 def get_second_most_common_freqs(arr):
     def smc_freq(bases):
-
         try:
-            return Counter(
-                [
-                    base
-                    for base in bases
-                    if base not in [DELETION_NUMBER, DEFAULT_NUMBER]
-                ]
-            ).most_common()[1][1]
+            counter = Counter(bases).most_common()
+            return [
+                freq
+                for base, freq in counter
+                if base not in (DELETION_NUMBER, DEFAULT_NUMBER)
+            ][1]
         except IndexError:
             return 0
 
@@ -92,6 +90,11 @@ def get_most_common_bases(arr):
             return 0
 
     return np.apply_along_axis(mc_base, axis=0, arr=arr)
+
+
+def get_consensus_seq(clusters, alignment_array):
+
+    return [get_most_common_bases(alignment_array.arr[cluster]) for cluster in clusters]
 
 
 class AlignmentArray:

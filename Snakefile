@@ -154,7 +154,7 @@ rule compress_fasta:
     output:
         '{name}.compressed.fasta'
     shell:
-        'cat {input} | python compress_homopolymers.py compressed > {output} '
+        'cat {input} | python src/utils/compress_homopolymers.py compressed > {output} '
 
 
 #
@@ -180,7 +180,7 @@ rule map_reads_minimap:
         minimap = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/logs/minimap2/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.minimap2.{compressed}.log'
     shell:
        """
-        cat  {input.reads} | python compress_homopolymers.py {wildcards.compressed} | minimap2 -t {threads} -ax {params.preset} --secondary=no {input.ref} - 2> {log.minimap} |
+        cat  {input.reads} | python src/utils/compress_homopolymers.py {wildcards.compressed} | minimap2 -t {threads} -ax {params.preset} --secondary=no {input.ref} - 2> {log.minimap} |
         samtools view -h -@ {threads} -F 2048 |
         gawk '{{
             match($6, /^([0-9]+)(.)/, start_arr);
@@ -217,7 +217,9 @@ rule clusterng_cluster_selection_read_extraction:
         uncompressed_bam = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.uncompressed.bam',
         uncompressed_bai = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.uncompressed.bam.bai',
         compressed_fasta = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.compressed.fasta',
-	uncompressed_fasta = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.uncompressed.fasta'
+        uncompressed_fasta = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.uncompressed.fasta',
+        compressed_fasta_fai = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.compressed.fasta.fai',
+        uncompressed_fasta_fai = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.uncompressed.fasta.fai'
     output:
         reads = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.for_contig_extension.fasta',
         clusters =  OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/clusters/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv',
@@ -230,9 +232,17 @@ rule clusterng_cluster_selection_read_extraction:
     params:
         prev_selected_cluster = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.selected_cluster.yaml'),
 	prev_colored_bam = recursive_input(OUTPUT_DIR +  'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.bam'),
-        prev_clusters = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv')
+        prev_clusters = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv'),
+	time = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/time_{contig}.tsv')
     run:
         try:
+            import time
+
+            start = time.time()
+
+	    file = open(params.time, 'a')
+            file.write(f"{wildcards.contig}\t{wildcards.number}\t{start}\n")
+
             cluster_and_extract_reads(int(wildcards.number), {**input, **output, **params})
         except Exception as e:
             print('Error in clustering and read extraction:', e)
@@ -293,3 +303,12 @@ rule merge_contigs:
         fasta = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/merged_contigs/seq_{start_number}.seq_{end_number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.merged_contig.fasta'
     run:
         merge_contigs(output.fasta, wildcards, OUTPUT_DIR)
+
+
+rule create_fai:
+    input:
+        '{name}.fasta'
+    output:
+        '{name}.fasta.fai'
+    shell:
+        'samtools faidx {input}'

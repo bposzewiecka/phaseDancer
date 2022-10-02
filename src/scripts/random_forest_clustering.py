@@ -2,7 +2,6 @@ import random
 from collections import Counter, defaultdict
 
 import numpy as np
-from scipy.spatial import distance
 
 from src.scripts.alignments import get_most_common_bases, get_second_most_common_freqs
 from src.scripts.constants import DEFAULT_NUMBER, DELETION_NUMBER
@@ -11,6 +10,7 @@ from src.scripts.defaults import (
     MIN_READ_ACCURACY,
     NUMBER_OF_SIMULATIONS,
 )
+from src.utils.clustering_utils import HammingDistances
 
 
 def simulate_clustering(arr, reads):
@@ -35,7 +35,7 @@ def simulate_clustering(arr, reads):
             smc = Counter(
                 base
                 for base in sub_arr[:, cluster_by]
-                if base not in (DELETION_NUMBER, DEFAULT_NUMBER)
+                if base not in (DEFAULT_NUMBER, DELETION_NUMBER)
             ).most_common()[1][0]
 
             rows1 = [
@@ -44,7 +44,7 @@ def simulate_clustering(arr, reads):
             rows2 = [
                 row
                 for row, base in zip(rows, sub_arr[:, cluster_by])
-                if base not in (smc, DELETION_NUMBER, DEFAULT_NUMBER)
+                if base not in (smc, DEFAULT_NUMBER, DELETION_NUMBER)
             ]
 
             partitions.append((rows1, coords.copy()))
@@ -58,11 +58,7 @@ def simulate_clustering(arr, reads):
 
         consensus_seqs = [get_most_common_bases(arr[cluster]) for cluster in clusters]
 
-        consensus_seqs = np.vstack(consensus_seqs)
-
-        row_distances = [
-            [distance.hamming(seq, row) for seq in consensus_seqs] for row in arr
-        ]
+        row_distances = HammingDistances(consensus_seqs, arr).get_seq_distances()
 
         seqs_number = [0] * len(consensus_seqs)
 
@@ -75,9 +71,7 @@ def simulate_clustering(arr, reads):
             if number >= freq_threshold
         ]
 
-        row_distances = [
-            [distance.hamming(seq, row) for seq in consensus_seqs] for row in arr
-        ]
+        row_distances = HammingDistances(consensus_seqs, arr).get_seq_distances()
 
         seqs_number = [0] * len(consensus_seqs)
 
@@ -137,6 +131,12 @@ def cluster_by_random_forests(partition):
             min_rand_clusters[cluster_len] = clusters
 
     min_rand_dist_sums_sorted = sorted(min_rand_dist_sums.items(), key=lambda x: x[1])
-    print(len(coords), len(partition.reads), min_rand_dist_sums_sorted)
+
+    print(
+        "Random forest stats: ",
+        len(coords),
+        len(partition.reads),
+        min_rand_dist_sums_sorted,
+    )
 
     return min_rand_clusters[min_rand_dist_sums_sorted[0][0]]

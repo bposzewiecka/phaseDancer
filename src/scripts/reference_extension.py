@@ -13,8 +13,8 @@ from src.utils.yaml_utils import save_yaml
 
 def align_assembled_contig(contig_fn, assembled_contig_fn):
 
-    print(contig_fn)
-    print(assembled_contig_fn)
+    # print(contig_fn)
+    # print(assembled_contig_fn)
 
     contig_name, contig = get_sequence(contig_fn)
     _, assembled_contig = get_sequence(assembled_contig_fn)
@@ -30,11 +30,11 @@ def align_assembled_contig(contig_fn, assembled_contig_fn):
     )  # pylint: disable=c-extension-no-member
 
     if alignment["editDistance"] < alignment_rev_complement["editDistance"]:
-        if alignment["editDistance"] > 600:
+        if alignment["editDistance"] > 10000:
             raise Exception
         return alignment, assembled_contig, contig_name, contig
 
-    if alignment_rev_complement["editDistance"] > 600:
+    if alignment_rev_complement["editDistance"] > 10000:
         raise Exception
     return (
         alignment_rev_complement,

@@ -1,83 +1,64 @@
 import random
-from collections import Counter
+from collections import Counter, defaultdict
 
 import numpy as np
 from scipy.spatial import distance
 
-from src.scripts.alignments import AlignmentArray, get_most_common_bases
+from src.scripts.alignments import AlignmentArray, get_consensus_seq
 from src.scripts.connected_components_clustering import (
     partition_by_connected_components,
 )
-from src.scripts.constants import BAM_CSOFT_CLIP, BY_STARTS, SEED
+from src.scripts.constants import BY_STARTS, SEED
 from src.scripts.defaults import (
-    MAX_BAM_CSOFT_CLIP_TO_CLASSIFY_AS_RIGHT_READ,
-    MIN_DIATANCE_FROM_THE_BEGINNING_TO_CLASSIFY_AS_RIGHT_READ,
+    MAX_DISTANCE_TO_JOIN_PARTITIONS,
     MIN_READS_TO_FORM_PARTITION,
-    STARTS_DISTANCE_CLUSTER_THRESHOLD,
 )
 from src.scripts.partition import Partition
 from src.scripts.random_forest_clustering import cluster_by_random_forests
+from src.utils.clustering_utils import select_cluster
 
 
 def divide_2_partitions_and_right_reads(alignment_array):
 
-    partitions = []
+    reference_starts = defaultdict(int)
     right_reads = []
-    reads = []
-    begin = 0
+    partitions_starts = [list(range())]
 
-    def assign_reads(reads, partitions, right_reads, begin, end):
+    for read in alignment_array.reads:
 
-        if len(reads) >= MIN_READS_TO_FORM_PARTITION or begin < 10:
-            partition = Partition(
-                alignment=alignment_array,
-                reads=reads,
-                by_type=BY_STARTS,
-                start_interval=(begin, end),
-            )
-            partitions.append(partition)
-        else:
-            right_reads.extend(reads)
+        reference_starts[read.reference_start] += 1
 
-    for i, read in enumerate(alignment_array.reads):
+    last_start = partitions_starts[-1][-1]
 
-        firstcigar = read.cigartuples[0]
+    for start, freq in reference_starts.items():
 
-        if firstcigar[0] != BAM_CSOFT_CLIP or (
-            firstcigar[1] <= MAX_BAM_CSOFT_CLIP_TO_CLASSIFY_AS_RIGHT_READ
-            and read.reference_start
-            > MIN_DIATANCE_FROM_THE_BEGINNING_TO_CLASSIFY_AS_RIGHT_READ
-        ):
-            right_reads.append(i)
+        if freq < MIN_READS_TO_FORM_PARTITION or start < last_start:
             continue
 
-        if (
-            reads
-            and read.reference_start
-            > alignment_array.reads[i - 1].reference_start
-            + STARTS_DISTANCE_CLUSTER_THRESHOLD
-        ):
-
-            assign_reads(
-                reads,
-                partitions,
-                right_reads,
-                begin,
-                alignment_array.reads[i - 1].reference_start,
-            )
-
-            if read.reference_start > alignment_array.reference_size / 2:
-                return partitions, right_reads
-
-            reads = [i]
-            begin = read.reference_start
-
+        if start - last_start <= MAX_DISTANCE_TO_JOIN_PARTITIONS:
+            partitions_starts[-1].append(start)
         else:
-            reads.append(i)
+            partitions_starts.append([start])
+        last_start = start
 
-    assign_reads(
-        reads, partitions, right_reads, begin, alignment_array.reads[-1].reference_start
-    )
+    inv_starts = {
+        start: i for i, starts in enumerate(partitions_starts) for start in starts
+    }
+
+    partitions = [[] for _ in partitions_starts]
+
+    print(f"Partitions starts: {partitions_starts}")
+
+    for i, read in enumerate(alignment_array.reads):
+        if read.reference_start in inv_starts:
+            partitions[inv_starts[read.reference_start]].append(i)
+        else:
+            right_reads.append(i)
+
+    partitions = [
+        Partition(alignment=alignment_array, reads=reads, by_type=BY_STARTS)
+        for reads in partitions
+    ]
 
     return partitions, right_reads
 
@@ -87,18 +68,13 @@ def get_counters(arr):
     return np.apply_along_axis(Counter, axis=0, arr=arr)
 
 
-def get_consensus_seq(clusters, alignment_array):
-
-    return [get_most_common_bases(alignment_array.arr[cluster]) for cluster in clusters]
-
-
 def get_unique_loci_by_cluster(clusters, alignment_array):
 
     consensus_seqs = get_consensus_seq(clusters, alignment_array)
 
     consensus_seqs = np.vstack(consensus_seqs)
 
-    unique_loci = [[]] * len(clusters)
+    unique_loci = [[] for _ in range(len(clusters))]
 
     for locus, counter in enumerate(get_counters(consensus_seqs)):
 
@@ -108,46 +84,62 @@ def get_unique_loci_by_cluster(clusters, alignment_array):
         for val, freq in counter.most_common():
 
             if freq == 1:
+
                 cluster = list(consensus_seqs[:, locus]).index(val)
+
                 unique_loci[cluster].append((locus, val))
-                print((locus, val, freq))
 
     return unique_loci
 
 
-def classify_right_reads(right_reads, alignment_array, clusters):
+def classify_right_reads(right_reads, alignment_array, clusters, selected_cluster):
 
-    if len(clusters) == 1:
-        clusters[0] += right_reads
-        return
+    consensus_seqs = get_consensus_seq(clusters, alignment_array)
+    selected_cluster_consensus_seq = consensus_seqs[selected_cluster]
 
-    unique_loci_by_cluster = get_unique_loci_by_cluster(clusters, alignment_array)
+    diffs = [
+        [
+            i
+            for i, base in enumerate(consensus_seq)
+            if base != selected_cluster_consensus_seq[i]
+        ]
+        for consensus_seq in consensus_seqs
+    ]
 
     for i in right_reads:
 
         read = alignment_array.reads[i]
-        distances = []
-
-        for unique_loci in unique_loci_by_cluster:
-
-            distances.append(
-                np.average(
-                    [
-                        alignment_array.arr[i][locus] != val
-                        for locus, val in unique_loci
-                        if locus > read.reference_start
-                    ]
-                )
+        consensus_seq_scores = [
+            np.average(
+                [
+                    alignment_array.arr[i][coord] == consensus_seqs[j][coord]
+                    for coord in diff_coords
+                    if coord > read.reference_start
+                ]
             )
+            for j, diff_coords in enumerate(diffs)
+            if j != selected_cluster
+        ]
+        selected_cluster_consensus_seq_scores = [
+            np.average(
+                [
+                    alignment_array.arr[i][coord]
+                    == selected_cluster_consensus_seq[coord]
+                    for coord in diff_coords
+                    if coord > read.reference_start
+                ]
+            )
+            for j, diff_coords in enumerate(diffs)
+            if j != selected_cluster
+        ]
 
-        ranking = sorted(enumerate(distances), key=lambda x: x[1])
-        ranking = [rank[0] for rank in ranking]
-
-        if (
-            distances[ranking[0]] < 0.25
-            and distances[ranking[1]] - distances[ranking[0]] > 0.2
+        if all(
+            c < sc and not np.isnan(c)
+            for c, sc in zip(
+                consensus_seq_scores, selected_cluster_consensus_seq_scores
+            )
         ):
-            clusters[ranking[0]].append(i)
+            clusters[selected_cluster].append(i)
 
 
 def sort_by_similarity_to_ref(clusters, alignment_array):
@@ -159,18 +151,17 @@ def sort_by_similarity_to_ref(clusters, alignment_array):
         for consensus_seq in consensus_seqs
     ]
 
-    sorted_clusters = sorted(
-        range(0, len(clusters)), key=lambda x: hamming_distances[x]
-    )
+    sort_order = sorted(range(0, len(clusters)), key=lambda x: hamming_distances[x])
 
-    return sorted_clusters
+    return [clusters[i] for i in sort_order]
 
 
-def cluster_reads(bam_fn, fasta_fn):
+def cluster_reads(bam_fn, fasta_fn, prev_clusters, prev_selected_cluster):
 
     alignment_array = AlignmentArray(bam_fn, fasta_fn)
 
     partitions, right_reads = divide_2_partitions_and_right_reads(alignment_array)
+
     partitions, clusters = partition_by_connected_components(partitions)
 
     random.seed(SEED)
@@ -178,6 +169,28 @@ def cluster_reads(bam_fn, fasta_fn):
     for partition in partitions:
         clusters += cluster_by_random_forests(partition)
 
-    classify_right_reads(right_reads, alignment_array, clusters)
+    clusters = sort_by_similarity_to_ref(clusters, alignment_array)
 
-    return clusters
+    if prev_selected_cluster is None:
+        # clusters are sorted by similarity to reference sequence
+        selected_cluster = 0
+    else:
+        selected_cluster = select_cluster(
+            {
+                i: [alignment_array.reads[read].query_name for read in cluster]
+                for i, cluster in enumerate(clusters)
+            },
+            prev_clusters,
+            prev_selected_cluster,
+        )
+
+    classify_right_reads(right_reads, alignment_array, clusters, selected_cluster)
+
+    clusters_with_read_names = {
+        i: [alignment_array.reads[read].query_name for read in cluster]
+        for i, cluster in enumerate(clusters)
+    }
+
+    print(f"Selected cluster: {selected_cluster}")
+
+    return clusters_with_read_names, selected_cluster

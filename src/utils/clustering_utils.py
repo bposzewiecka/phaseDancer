@@ -1,17 +1,69 @@
 from collections import defaultdict
 
+import numpy as np
 import pysam
+from scipy.spatial.distance import pdist
 
 from src.scripts.constants import PALETTE
+
+
+class HammingDistances:
+    def __init__(self, consensus_seqs, seqs=None):
+
+        self.consensus_seqs = np.vstack(consensus_seqs)
+
+        if seqs is not None:
+            self.seqs = np.vstack(seqs)
+            self.data = np.concatenate((self.consensus_seqs, self.seqs), axis=0)
+        else:
+            self.data = self.consensus_seqs
+
+        self.size = np.shape(self.data)[0]
+        distances = pdist(self.data, "hamming")
+        self.distances = [
+            [self.dist(i, j, distances) for i in range(self.size)]
+            for j in range(self.size)
+        ]
+
+    def dist(self, i, j, distances):
+
+        if i == j:
+            return 0
+        if i < j:
+            return distances[self.size * i + j - ((i + 2) * (i + 1)) // 2]
+
+        return self.dist(j, i, distances)  # pylint: disable=arguments-out-of-order
+
+    def get_seq_distances(self):
+
+        return [
+            self.distances[len(self.consensus_seqs) + i][: len(self.consensus_seqs)]
+            for i in range(len(self.seqs))
+        ]
+
+    def get_distances(self):
+        return self.distances
 
 
 def select_cluster(clusters, prev_clusters, prev_selected_cluster):
 
     prev_reads = set(prev_clusters[prev_selected_cluster])
 
-    stats = [len(prev_reads.intersection(cluster)) for cluster in clusters]
+    stats = [len(prev_reads.intersection(reads)) for cluster, reads in clusters.items()]
 
-    return stats.index(max(stats))
+    print("Clusters to: ", stats)
+
+    selected_cluster = stats.index(max(stats))
+    selected_reads = set(clusters[selected_cluster])
+
+    stats = [
+        len(selected_reads.intersection(reads))
+        for cluster, reads in prev_clusters.items()
+    ]
+
+    print("Previous to selected: ", stats)
+
+    return selected_cluster
 
 
 def read_clusters(cluster_fn):

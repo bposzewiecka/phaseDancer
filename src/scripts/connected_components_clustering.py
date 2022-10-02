@@ -1,5 +1,4 @@
 import networkx as nx
-import numpy as np
 
 from src.scripts.constants import BY_CONNECTED_COMPONENTS
 from src.scripts.defaults import (
@@ -9,6 +8,7 @@ from src.scripts.defaults import (
     MIN_COORDS_TO_CLUSTER_BY_CONNECTED_COMPONENTS,
 )
 from src.scripts.partition import Partition
+from src.utils.clustering_utils import HammingDistances
 
 
 def partition_by_connected_components(partitions):
@@ -38,26 +38,24 @@ def cluster_by_connected_components(partition, coords):
 
     sub_arr = partition.get_sub_arr(coords)
 
+    distances = HammingDistances(sub_arr).get_distances()
+
     for i, read1 in enumerate(partition.reads):
 
-        bases1 = sub_arr[i]
+        most_similar_reads = sorted(
+            list(zip(partition.reads, distances[i])), key=lambda x: x[1]
+        )
+        most_similar_reads = most_similar_reads[
+            :CONNECTED_COMPONENTS_MAX_NUMBER_OF_READS
+        ]
 
-        weights = []
+        for read2, distance in most_similar_reads:
 
-        for j, read2 in enumerate(partition.reads):
-
-            bases2 = sub_arr[j]
-            weight = np.count_nonzero(bases1 == bases2)
-            weights.append((weight, read1, read2))
-
-        most_similar_reads = sorted(weights)[-CONNECTED_COMPONENTS_MAX_NUMBER_OF_READS:]
-
-        for weight, read1, read2 in most_similar_reads:
-
-            if weight / len(coords) > CONNECTED_COMPONENTS_HAMMING_SIMILARITY_TRESHOLD:
+            if distance < 1 - CONNECTED_COMPONENTS_HAMMING_SIMILARITY_TRESHOLD:
                 graph.add_edge(read1, read2)
 
     connected_components = list(nx.connected_components(graph))
+
     partitions = [
         Partition(
             alignment=partition.alignment,
