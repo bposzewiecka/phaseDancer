@@ -230,10 +230,11 @@ rule clusterng_cluster_selection_read_extraction:
         uncompressed_colored_bai =  OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/clusters/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.uncompressed.bam.bai',
 	extension_size = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/clusters/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.extension_size.yaml',
     params:
-        prev_selected_cluster = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.selected_cluster.yaml'),
-	prev_colored_bam = recursive_input(OUTPUT_DIR +  'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.bam'),
-        prev_clusters = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv'),
-	time = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/time_{contig}.tsv')
+        prev_colored_bam = recursive_input(OUTPUT_DIR +  'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.bam'),
+        time = recursive_input(OUTPUT_DIR + 'data/{sample}/{contig}/time_{contig}.tsv'),
+        technology = lambda wildcards: config['samples'][wildcards['sample']]['technology'],
+        prev_selected_clusters = lambda wildcards: expand(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.selected_cluster.yaml'.format(**wildcards), number = get_range(0, int(wildcards.number) - 1)),
+        prev_clusters = lambda wildcards: expand(OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{{number}}/clusters/seq_{{number}}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.clusters.tsv'.format(**wildcards), number = get_range(0, int(wildcards.number) - 1))
     run:
         try:
             import time
@@ -243,7 +244,7 @@ rule clusterng_cluster_selection_read_extraction:
 	    file = open(params.time, 'a')
             file.write(f"{wildcards.contig}\t{wildcards.number}\t{start}\n")
 
-            cluster_and_extract_reads(int(wildcards.number), {**input, **output, **params})
+            cluster_and_extract_reads(int(wildcards.number), {**input, **output, **params, **wildcards})
         except Exception as e:
             print('Error in clustering and read extraction:', e)
             raise e
@@ -268,7 +269,7 @@ rule assembly_wtdbg2:
         err = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/logs/wtdbg2/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.for_contig_extension.log.err',
         out = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/logs/wtdbg2/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.for_contig_extension.log.out'
     shell:
-        'mkdir -p {params.wtdbg2_dir}; wtdbg2.pl -o {params.output_name} -g 21000 -x {params.preset} {input} > {log.out} 2> {log.err} ; cp {params.wtdbg2_contigs} {output}'
+        'mkdir -p {params.wtdbg2_dir}; wtdbg2.pl -o {params.output_name} -g 12000 -x {params.preset} {input} > {log.out} 2> {log.err} ; cp {params.wtdbg2_contigs} {output}'
 
 
 #

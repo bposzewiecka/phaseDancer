@@ -5,6 +5,7 @@ import pysam
 from scipy.spatial.distance import pdist
 
 from src.scripts.constants import PALETTE
+from src.utils.yaml_utils import load_yaml
 
 
 class HammingDistances:
@@ -45,19 +46,50 @@ class HammingDistances:
         return self.distances
 
 
-def select_cluster(clusters, prev_clusters, prev_selected_cluster):
+def select_cluster(clusters, prev_clusters_fn, prev_selected_cluster_fn):
 
-    prev_reads = set(prev_clusters[prev_selected_cluster])
+    prev_selected_cluster = load_yaml(prev_selected_cluster_fn[-1])["selected"]
+    prev_clusters = read_clusters(prev_clusters_fn[-1])
 
-    stats = [len(prev_reads.intersection(reads)) for cluster, reads in clusters.items()]
+    prev_reads = {
+        read
+        for read, reference_start in prev_clusters[prev_selected_cluster]
+        if reference_start < 1000
+    }
 
-    print("Clusters to: ", stats)
+    stats = [
+        (len(prev_reads.intersection(reads)), i)
+        for i, (cluster, reads) in enumerate(clusters.items())
+    ]
 
-    selected_cluster = stats.index(max(stats))
+    print("Clusters to: ", [l for l, _ in stats])
+
+    stats = [(l, i) for l, i in stats if l > 1]
+
+    if len(stats) == 1:
+        selected_cluster = stats[0][1]
+    else:
+        prev_selected_cluster2 = load_yaml(prev_selected_cluster_fn[-2])["selected"]
+        prev_clusters2 = read_clusters(prev_clusters_fn[-2])
+
+        prev_reads2 = {
+            read
+            for read, reference_start in prev_clusters2[prev_selected_cluster2]
+            if reference_start < 1000
+        }
+        stats = [
+            len(prev_reads2.intersection(reads))
+            for i, (cluster, reads) in enumerate(clusters.items())
+        ]
+
+        print("Previous to:", stats)
+
+        selected_cluster = stats.index(max(stats))
+
     selected_reads = set(clusters[selected_cluster])
 
     stats = [
-        len(selected_reads.intersection(reads))
+        len(selected_reads.intersection([read for read, _ in reads]))
         for cluster, reads in prev_clusters.items()
     ]
 
@@ -72,9 +104,10 @@ def read_clusters(cluster_fn):
 
     with open(cluster_fn, encoding="UTF-8") as handler:
         for line in handler:
-            cluster, read_name = line.strip().split()
+            cluster, read_name, reference_start = line.strip().split()
             cluster = int(cluster)
-            clusters[cluster].add(read_name)
+            reference_start = int(reference_start)
+            clusters[cluster].add((read_name, reference_start))
 
     return clusters
 
@@ -84,8 +117,8 @@ def save_clusters(clusters_fn, clusters):
     with open(clusters_fn, "w", encoding="UTF-8") as handler:
 
         for i, cluster in clusters.items():
-            for read_no in cluster:
-                handler.write(f"{i}\t{read_no}\n")
+            for read, reference_start in cluster:
+                handler.write(f"{i}\t{read}\t{reference_start}\n")
 
 
 def inverse_clusters(clusters):

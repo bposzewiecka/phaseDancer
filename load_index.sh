@@ -61,7 +61,7 @@ do
     echo $NAME.fasta
 
 
-    { unbuffer  minimap2 -p 0 -N 3000 -x map-pb -t 1 -K 1 --sam-hit-only ${NAME}.mmi <(unbuffer cat  ${NAME}_out.fifo) | unbuffer -p  python3 src/mem_index/filter.py "${NAME}.fasta" $NO  > output_file; } &
+    { unbuffer  minimap2 -p 0 -N 300000 -x map-pb -t 1 -K 1 --sam-hit-only ${NAME}.mmi <(unbuffer cat  ${NAME}_out.fifo) | unbuffer -p  python3 src/mem_index/filter.py "${NAME}.fasta" $NO  > output_file; } &
 
     PID=$!
     echo "PID of minimap2 index parent process: " $PID

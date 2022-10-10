@@ -8,8 +8,9 @@ from src.scripts.alignments import AlignmentArray, get_consensus_seq
 from src.scripts.connected_components_clustering import (
     partition_by_connected_components,
 )
-from src.scripts.constants import BY_STARTS, SEED
+from src.scripts.constants import BY_STARTS, INSERTION_NUMBER, SEED, get_excluded_values
 from src.scripts.defaults import (
+    DISTANCE_TO_FORM_FIRST_PARTITION,
     MAX_DISTANCE_TO_JOIN_PARTITIONS,
     MIN_READS_TO_FORM_PARTITION,
 )
@@ -22,7 +23,7 @@ def divide_2_partitions_and_right_reads(alignment_array):
 
     reference_starts = defaultdict(int)
     right_reads = []
-    partitions_starts = [list(range())]
+    partitions_starts = [list(range(DISTANCE_TO_FORM_FIRST_PARTITION))]
 
     for read in alignment_array.reads:
 
@@ -93,15 +94,23 @@ def get_unique_loci_by_cluster(clusters, alignment_array):
 
 
 def classify_right_reads(right_reads, alignment_array, clusters, selected_cluster):
+    def is_coord_right(coord, read, reference_size):
+        return (
+            read.reference_start < coord < reference_size
+            or read.reference_start < coord - reference_size < reference_size
+        )
 
     consensus_seqs = get_consensus_seq(clusters, alignment_array)
     selected_cluster_consensus_seq = consensus_seqs[selected_cluster]
+
+    reference_size = len(alignment_array.reference_seq)
 
     diffs = [
         [
             i
             for i, base in enumerate(consensus_seq)
             if base != selected_cluster_consensus_seq[i]
+            and base not in get_excluded_values(alignment_array.technology)
         ]
         for consensus_seq in consensus_seqs
     ]
@@ -114,7 +123,7 @@ def classify_right_reads(right_reads, alignment_array, clusters, selected_cluste
                 [
                     alignment_array.arr[i][coord] == consensus_seqs[j][coord]
                     for coord in diff_coords
-                    if coord > read.reference_start
+                    if is_coord_right(coord, read, reference_size)
                 ]
             )
             for j, diff_coords in enumerate(diffs)
@@ -126,7 +135,7 @@ def classify_right_reads(right_reads, alignment_array, clusters, selected_cluste
                     alignment_array.arr[i][coord]
                     == selected_cluster_consensus_seq[coord]
                     for coord in diff_coords
-                    if coord > read.reference_start
+                    if is_coord_right(coord, read, reference_size)
                 ]
             )
             for j, diff_coords in enumerate(diffs)
@@ -146,19 +155,37 @@ def sort_by_similarity_to_ref(clusters, alignment_array):
 
     consensus_seqs = get_consensus_seq(clusters, alignment_array)
 
-    hamming_distances = [
-        distance.hamming(consensus_seq, alignment_array.reference_seq)
-        for consensus_seq in consensus_seqs
-    ]
+    hamming_distances = []
+
+    reference_size = len(alignment_array.reference_seq)
+
+    for consensus_seq in consensus_seqs:
+        alignment_diffs = int(
+            distance.hamming(
+                consensus_seq[:reference_size], alignment_array.reference_seq
+            )
+            * reference_size
+        )
+        insertions_diffs = np.count_nonzero(
+            consensus_seq[reference_size:] == INSERTION_NUMBER
+        )
+        hamming_distances.append(alignment_diffs + insertions_diffs)
+
+    ##hamming_distances = [
+    #    distance.hamming(consensus_seq, alignment_array.reference_seq)
+    #    for consensus_seq in consensus_seqs
+    # ]
 
     sort_order = sorted(range(0, len(clusters)), key=lambda x: hamming_distances[x])
 
     return [clusters[i] for i in sort_order]
 
 
-def cluster_reads(bam_fn, fasta_fn, prev_clusters, prev_selected_cluster):
+def cluster_reads(
+    bam_fn, fasta_fn, prev_clusters_fn, prev_selected_clusters_fn, technology
+):
 
-    alignment_array = AlignmentArray(bam_fn, fasta_fn)
+    alignment_array = AlignmentArray(bam_fn, fasta_fn, technology)
 
     partitions, right_reads = divide_2_partitions_and_right_reads(alignment_array)
 
@@ -166,28 +193,36 @@ def cluster_reads(bam_fn, fasta_fn, prev_clusters, prev_selected_cluster):
 
     random.seed(SEED)
 
-    for partition in partitions:
-        clusters += cluster_by_random_forests(partition)
+    for partition in sorted(partitions, key=lambda x: len(x.reads)):
+        clusters += cluster_by_random_forests(partition, technology)
 
     clusters = sort_by_similarity_to_ref(clusters, alignment_array)
 
-    if prev_selected_cluster is None:
+    if not prev_clusters_fn:
         # clusters are sorted by similarity to reference sequence
         selected_cluster = 0
     else:
+
         selected_cluster = select_cluster(
             {
                 i: [alignment_array.reads[read].query_name for read in cluster]
                 for i, cluster in enumerate(clusters)
             },
-            prev_clusters,
-            prev_selected_cluster,
+            prev_clusters_fn,
+            prev_selected_clusters_fn,
         )
 
+    print("classify right reads")
     classify_right_reads(right_reads, alignment_array, clusters, selected_cluster)
 
     clusters_with_read_names = {
-        i: [alignment_array.reads[read].query_name for read in cluster]
+        i: [
+            (
+                alignment_array.reads[read].query_name,
+                alignment_array.reads[read].reference_start,
+            )
+            for read in cluster
+        ]
         for i, cluster in enumerate(clusters)
     }
 

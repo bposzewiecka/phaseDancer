@@ -1,8 +1,8 @@
 from src.scripts.clustering import cluster_reads
 from src.scripts.read_selection import get_trimmed_reads_fasta
-from src.utils.clustering_utils import get_colored_bam, read_clusters, save_clusters
+from src.utils.clustering_utils import get_colored_bam, save_clusters
 from src.utils.reads_utils import save_reads_adding_suffix_to_name
-from src.utils.yaml_utils import load_yaml, save_yaml
+from src.utils.yaml_utils import save_yaml
 
 
 def save_clusters_as_bams(params, clusters):
@@ -17,10 +17,7 @@ def save_clusters_as_bams(params, clusters):
     get_colored_bam(compressed_bam_fn, compressed_colored_bam_fn, clusters)
 
 
-def cluster_and_select_cluster(params, number):
-
-    prev_selected_cluster_fn = params["prev_selected_cluster"]
-    prev_clusters_fn = params["prev_clusters"]
+def cluster_and_select_cluster(params):
 
     selected_cluster_fn = params["selected_cluster"]
     clusters_fn = params["clusters"]
@@ -28,17 +25,22 @@ def cluster_and_select_cluster(params, number):
     compressed_bam_fn = params["compressed_bam"]
     compressed_fasta_fn = params["compressed_fasta"]
 
-    prev_selected_cluster = None
-    prev_clusters = None
+    technology = params["technology"]
 
-    if number > 0:
-        prev_selected_cluster = load_yaml(prev_selected_cluster_fn)["selected"]
-        prev_clusters = read_clusters(prev_clusters_fn)
+    prev_selected_clusters_fn = params["prev_selected_clusters"]
+    prev_clusters_fn = params["prev_clusters"]
+
+    # prev_selected_clusters = load_yaml(prev_selected_cluster_fn)["selected"]
+    # prev_clusters = read_clusters(prev_clusters_fn)
 
     # print('Clustering...')
 
     clusters, selected_cluster = cluster_reads(
-        compressed_bam_fn, compressed_fasta_fn, prev_clusters, prev_selected_cluster
+        compressed_bam_fn,
+        compressed_fasta_fn,
+        prev_clusters_fn,
+        prev_selected_clusters_fn,
+        technology,
     )
 
     # print('After clustering.')
@@ -58,6 +60,8 @@ def cluster_and_select_cluster(params, number):
     save_yaml(selected_cluster_fn, {"selected": selected_cluster})
     save_clusters(clusters_fn, clusters)
 
+    clusters = {i: [read for read, _ in cluster] for i, cluster in clusters.items()}
+
     return clusters, selected_cluster
 
 
@@ -74,8 +78,8 @@ def extract_reads(params, selected_reads):
     reads, extension_size = get_trimmed_reads_fasta(
         uncompressed_bam_fn,
         selected_reads,
-        -2500,
-        10000,
+        -1000,
+        6000,
         split_mode="HALF",
     )
 
@@ -94,7 +98,7 @@ def cluster_and_extract_reads(number, params):
 
     print(f"********************** Step {number} **********************")
 
-    clusters, selected_cluster = cluster_and_select_cluster(params, number)
+    clusters, selected_cluster = cluster_and_select_cluster(params)
     # print(clusters, selected_cluster)
     save_clusters_as_bams(params, clusters)
     extract_reads(params, clusters[selected_cluster])

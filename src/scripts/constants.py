@@ -26,7 +26,14 @@ LETTERS_TO_NUMBERS["G"] = 3
 LETTERS_TO_NUMBERS["T"] = 4
 
 DELETION_NUMBER = 5
+INSERTION_NUMBER = 6
+NON_INSERTION_NUMBER = 7
 DEFAULT_NUMBER = 9
+
+
+def get_excluded_values(technology):
+    return (DEFAULT_NUMBER,) + (DELETION_NUMBER if technology != "hifi" else tuple())
+
 
 NUMBERS_TO_LETTERS = {value: key for key, value in LETTERS_TO_NUMBERS.items()}
 

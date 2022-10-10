@@ -21,3 +21,6 @@ class Partition:
         sub_arr = self.alignment.arr[self.reads]
         sub_arr = sub_arr[:, coords]
         return sub_arr
+
+    def get_reference_size(self):
+        return self.alignment.get_reference_size()
