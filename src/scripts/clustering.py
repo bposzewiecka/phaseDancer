@@ -57,8 +57,8 @@ def divide_2_partitions_and_right_reads(alignment_array):
             right_reads.append(i)
 
     partitions = [
-        Partition(alignment=alignment_array, reads=reads, by_type=BY_STARTS)
-        for reads in partitions
+        Partition(alignment=alignment_array, reads=reads, by_type=BY_STARTS, start=i)
+        for i, reads in enumerate(partitions)
     ]
 
     return partitions, right_reads
@@ -181,22 +181,35 @@ def sort_by_similarity_to_ref(clusters, alignment_array):
     return [clusters[i] for i in sort_order]
 
 
-def cluster_reads(
-    bam_fn, fasta_fn, prev_clusters_fn, prev_selected_clusters_fn, technology
+def cluster_reads(  # pylint: disable=line-too-long, too-many-arguments
+    compressed_bam_fn,
+    compressed_fasta_fn,
+    uncompressed_bam_fn,
+    uncompressed_fasta_fn,
+    prev_clusters_fn,
+    prev_selected_clusters_fn,
+    technology,
 ):
 
-    alignment_array = AlignmentArray(bam_fn, fasta_fn, technology)
-
+    alignment_array = AlignmentArray(compressed_bam_fn, compressed_fasta_fn, technology)
     partitions, right_reads = divide_2_partitions_and_right_reads(alignment_array)
 
+    if len(sorted(partitions, key=lambda x: x.start)[0].get_coords(8)) < 2:
+        alignment_array = AlignmentArray(
+            uncompressed_bam_fn, uncompressed_fasta_fn, technology
+        )
+        partitions, right_reads = divide_2_partitions_and_right_reads(alignment_array)
+
     partitions, clusters = partition_by_connected_components(partitions)
+
+    print(partitions, clusters)
 
     random.seed(SEED)
 
     for partition in sorted(partitions, key=lambda x: len(x.reads)):
         clusters += cluster_by_random_forests(partition, technology)
 
-    clusters = sort_by_similarity_to_ref(clusters, alignment_array)
+    # clusters = sort_by_similarity_to_ref(clusters, alignment_array)
 
     if not prev_clusters_fn:
         # clusters are sorted by similarity to reference sequence
@@ -213,6 +226,7 @@ def cluster_reads(
         )
 
     print("classify right reads")
+
     classify_right_reads(right_reads, alignment_array, clusters, selected_cluster)
 
     clusters_with_read_names = {

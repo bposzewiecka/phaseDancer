@@ -21,7 +21,7 @@ def recursive_input(input_file):
     return func
 
 PHASEDANCER_DATA_DIR = os.environ['PHASEDANCER_DATA_DIR']
-OUTPUT_DIR = PHASEDANCER_DATA_DIR + '/'
+OUTPUT_DIR = PHASEDANCER_DATA_DIR  + '/'
 
 configfile: OUTPUT_DIR + CONFIG_FN
 
@@ -269,7 +269,7 @@ rule assembly_wtdbg2:
         err = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/logs/wtdbg2/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.for_contig_extension.log.err',
         out = OUTPUT_DIR + 'data/{sample}/{contig}/{assembler}/{cl_type}_{cluster}/seq_{number}/logs/wtdbg2/seq_{number}.{contig}.{cl_type}_{cluster}.{sample}.{assembler}.for_contig_extension.log.out'
     shell:
-        'mkdir -p {params.wtdbg2_dir}; wtdbg2.pl -o {params.output_name} -g 12000 -x {params.preset} {input} > {log.out} 2> {log.err} ; cp {params.wtdbg2_contigs} {output}'
+        'mkdir -p {params.wtdbg2_dir}; wtdbg2.pl -o {params.output_name} -g 17000 -x {params.preset} {input} > {log.out} 2> {log.err} ; cp {params.wtdbg2_contigs} {output}'
 
 
 #

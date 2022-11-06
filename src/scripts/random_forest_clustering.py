@@ -7,11 +7,10 @@ from scipy.spatial import distance
 
 from src.scripts.alignments import get_most_common_bases, get_second_most_common_freqs
 from src.scripts.constants import get_excluded_values
-from src.scripts.defaults import (
-    COORD_FREQ_TRESHOLD,
-    MIN_READ_ACCURACY,
+from src.scripts.defaults import (  # COORD_FREQ_TRESHOLD,; MIN_READ_ACCURACY,
     NUMBER_OF_SIMULATIONS,
 )
+from src.utils.clustering_utils import HammingDistances
 
 
 def simulate_clustering(arr, reads, technology, reference_length):
@@ -112,7 +111,7 @@ def simulate_clustering(arr, reads, technology, reference_length):
     clusters = []
     partitions = [(list(range(nrows)), list(range(ncols)))]
 
-    freq_threshold = int(COORD_FREQ_TRESHOLD * MIN_READ_ACCURACY)
+    freq_threshold = 8  # int(COORD_FREQ_TRESHOLD * MIN_READ_ACCURACY)
 
     while partitions:
 
@@ -126,9 +125,9 @@ def simulate_clustering(arr, reads, technology, reference_length):
     return realign_results(clusters)
 
 
-def cluster_by_random_forests(partition, technology):
+def cluster_by_random_forests(partition, technology):  # pylint: disable=too-many-locals
 
-    coords = partition.get_coords(COORD_FREQ_TRESHOLD)
+    coords = partition.get_coords(8)  # COORD_FREQ_TRESHOLD)
 
     if len(coords) == 0:
         return [partition.reads]
@@ -141,7 +140,7 @@ def cluster_by_random_forests(partition, technology):
 
     reference_size = partition.get_reference_size()
 
-    if len(coords) > 1:
+    if len(coords) > 1000:
 
         with get_context("spawn").Pool(processes=NUMBER_OF_SIMULATIONS) as pool:
             random_clusters = pool.starmap(
@@ -185,4 +184,15 @@ def cluster_by_random_forests(partition, technology):
         flush=True,
     )
 
-    return min_rand_clusters[min_rand_dist_sums_sorted[0][0]]
+    cons = min_rand_consensus_seqs[min_rand_dist_sums_sorted[0][0]]
+
+    print(cons)
+
+    for dist in HammingDistances(cons).get_distances():
+        print([len(cons[0]) * d for d in dist])
+
+    clusters = min_rand_clusters[min_rand_dist_sums_sorted[0][0]]
+
+    print([len(cluster) for cluster in clusters])
+
+    return clusters

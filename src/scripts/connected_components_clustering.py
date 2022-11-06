@@ -1,10 +1,9 @@
 import networkx as nx
 
 from src.scripts.constants import BY_CONNECTED_COMPONENTS
-from src.scripts.defaults import (
+from src.scripts.defaults import (  # COORD_FREQ_TRESHOLD,
     CONNECTED_COMPONENTS_HAMMING_SIMILARITY_TRESHOLD,
     CONNECTED_COMPONENTS_MAX_NUMBER_OF_READS,
-    COORD_FREQ_TRESHOLD,
     MIN_COORDS_TO_CLUSTER_BY_CONNECTED_COMPONENTS,
 )
 from src.scripts.partition import Partition
@@ -18,7 +17,7 @@ def partition_by_connected_components(partitions):
 
     for partition in partitions:
 
-        coords = partition.get_coords(COORD_FREQ_TRESHOLD)
+        coords = partition.get_coords(8)  # COORD_FREQ_TRESHOLD)
 
         if len(coords) == 0:
             clusters.append(partition.reads)

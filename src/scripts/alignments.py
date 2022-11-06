@@ -175,9 +175,13 @@ class AlignmentArray:
 
         self.arr = np.vstack(self.arr)
 
-    def get_read_names(self, reads):
+    def get_read_names(self, reads=None):
 
-        return [read.query_name for i, read in enumerate(self.reads) if i in reads]
+        return [
+            read.query_name
+            for i, read in enumerate(self.reads)
+            if i in reads or reads is None
+        ]
 
     def get_reference_size(self):
 
@@ -191,8 +195,10 @@ class AlignmentArray:
 
         threshold = sorted(second_most_common_freqs)[-MAX_NUMBER_OF_COORDS]
 
-        return [
+        return [  # pylint: disable=line-too-long
             i
             for i, freq in enumerate(second_most_common_freqs)
-            if freq >= threshold and freq >= bases_freq_threshold
+            if freq >= threshold
+            and freq >= bases_freq_threshold
+            and i not in self.masked_low_complexity
         ]

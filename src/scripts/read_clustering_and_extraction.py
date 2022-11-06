@@ -25,6 +25,9 @@ def cluster_and_select_cluster(params):
     compressed_bam_fn = params["compressed_bam"]
     compressed_fasta_fn = params["compressed_fasta"]
 
+    uncompressed_bam_fn = params["uncompressed_bam"]
+    uncompressed_fasta_fn = params["uncompressed_fasta"]
+
     technology = params["technology"]
 
     prev_selected_clusters_fn = params["prev_selected_clusters"]
@@ -38,6 +41,8 @@ def cluster_and_select_cluster(params):
     clusters, selected_cluster = cluster_reads(
         compressed_bam_fn,
         compressed_fasta_fn,
+        uncompressed_bam_fn,
+        uncompressed_fasta_fn,
         prev_clusters_fn,
         prev_selected_clusters_fn,
         technology,
@@ -79,7 +84,7 @@ def extract_reads(params, selected_reads):
         uncompressed_bam_fn,
         selected_reads,
         -1000,
-        6000,
+        8000,
         split_mode="HALF",
     )
 

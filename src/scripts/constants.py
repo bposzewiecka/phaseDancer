@@ -32,7 +32,9 @@ DEFAULT_NUMBER = 9
 
 
 def get_excluded_values(technology):
-    return (DEFAULT_NUMBER,) + (DELETION_NUMBER if technology != "hifi" else tuple())
+    return (
+        (DEFAULT_NUMBER,) if technology == "hifi" else (DEFAULT_NUMBER, DELETION_NUMBER)
+    )
 
 
 NUMBERS_TO_LETTERS = {value: key for key, value in LETTERS_TO_NUMBERS.items()}

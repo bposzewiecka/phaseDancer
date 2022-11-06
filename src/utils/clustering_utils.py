@@ -66,7 +66,7 @@ def select_cluster(clusters, prev_clusters_fn, prev_selected_cluster_fn):
 
     stats = [(l, i) for l, i in stats if l > 1]
 
-    if len(stats) == 1:
+    if len(stats) == 1 or len(prev_clusters_fn) < 3:
         selected_cluster = stats[0][1]
     else:
         prev_selected_cluster2 = load_yaml(prev_selected_cluster_fn[-2])["selected"]

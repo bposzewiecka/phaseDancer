@@ -1,13 +1,13 @@
 class Partition:
     def __init__(  # pylint:  disable=too-many-arguments
-        self, alignment, by_type, reads=None, coords=None, start_interval=None
+        self, alignment, by_type, reads=None, coords=None, start=None
     ):
 
         self.alignment = alignment
         self.reads = reads if reads else []
         self.by_type = by_type
         self.coords = coords if coords else []
-        self.start_interval = start_interval
+        self.start = start
         self.number = None
         self.parent = None
 
