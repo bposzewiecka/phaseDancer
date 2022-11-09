@@ -12,8 +12,6 @@ To run phaseDancer you should have above software installed:
 * [snakemake](https://snakemake.readthedocs.io/en/stable/)
 * [wtdbg2](https://github.com/ruanjue/wtdbg2)
 
-If you want to use IGV screenshot generation functionality, IGV should run by calling **igv.sh** command.
-
 ## Configuration
 
 ### Step 1: Installation of required software
@@ -93,9 +91,7 @@ samples:
         contig-size: number
         contig-extension-size: number
         browser: true|false
-        igv-screenshots: true|false
-        iterations-right: number
-        iterations-left: number
+        iterations: number
         mappings: [ reference-name1, reference-name2 ]
         contigs:
             contig-name1:
@@ -115,9 +111,7 @@ samples:
         contig-size: number
         contig-extension-size: number
         browser: true|false
-        igv-screenshots: true|false
-        iterations-right: number
-        iterations-left: number
+        iterations: number
         contigs: [ contig-name1, contig-name2, ..., contig-name_n ]
 ```
 
@@ -129,8 +123,7 @@ samples:
 | browser |  If true, the browser will be shown in the PhaseDancerViewer application. | true or false | no | true | sample, contig |
 | igv-screenshot |  If true, igv-screenshot of clusters will be generated and shown in the PhaseDancerViewer application. | true or false | no  | false | sample, contig |
 | mappings | List of reference genomes that every contig will be mapped on. Mapping will generate files in *.paf* format. If the name *genome_name* is on the list, file or symbolic link *genome_name.fasta*  should be placed in *phaseDancer/data/refs/* directory.  | list  | no  | -  | sample, contig |
-| iterations-right | Number of iteration of the algorithm extending conitgs to the right. | number | yes  | 0  | sample, contig |
-| iterations-left | Number of iteration of the algorithm extending conitgs to the left. | number |  yes |  0 | sample, contig|
+| iterations | Number of iteration of the algorithm extending conitgs to the right. | number | yes  | 0  | sample, contig |
 | contigs  | List or dictianary of contigs to extend. | dictionary or list | yes  | - | sample |
 
 For example, the following *yaml* file can be created for sample *chaos-pb-sequel*, and two contigs to extend (*telomere2Aq*, *telomere2Bp*).
@@ -146,17 +139,14 @@ samples:
         contig-size: 10000
         contig-extension-size: 5000
         browser: true
-        igv-screenshots: true
-        iterations-right: 10
-        iterations-left: 10
+        iterations: 10
         mappings: [ hg38, panTro6 ]
         contigs:
             telomere2Aq:
-                iterations-right: 40
+                iterations: 40
                 contig-extension-size: 6000
             telomere2Bp:
-                iterations-left: 40
-                igv-screenshost: false
+                iterations: 40
 ```
 
 For example, the following *yaml* file can be created for sample *chaos-pb-sequel*, and two contigs to extend (*telomere2Aq*, *telomere2Bp*).
@@ -169,8 +159,7 @@ samples:
         contig-size: 10000
         contig-extension-size: 5000
         browser: true
-        igv-screenshots: true
-        iterations-left: 10
+        iterations: 10
         mappings: [ hg38, panTro6 ]
         contigs: [ telomere2Aq, telomere2Bp ]
 ```
