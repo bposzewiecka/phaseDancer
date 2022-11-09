@@ -1,39 +1,14 @@
 # PhaseDancer
 
-![Diagram showing PhaseDancer algorithm workflow](/images/phaseDancer-small.png?raw=true "PhaseDancer algorithm workflow")
+##  Workflow of the algorithm
 
-##  Dependencies
+![Diagram showing PhaseDancer algorithm workflow](/images/PHASEDANCER.png?raw=true "PhaseDancer algorithm workflow")
 
-To run phaseDancer you should have above software installed:
-
-* python3
-* [minimap2](https://github.com/lh3/minimap2)
-* [samtools](http://www.htslib.org)
-* [unbuffer](https://linux.die.net/man/1/unbuffer)
-* [snakemake](https://snakemake.readthedocs.io/en/stable/)
-* [wtdbg2](https://github.com/ruanjue/wtdbg2)
 
 ## Configuration
 
-### Step 1: Installation of required software
 
-The following dependencies should be installed: minimap2, samtools,  unbuffer, snakemake, wtdbg2.
-
-### Step 2: Cloning the PhaseDancer repository and setting environment variable PHASEDANCER_DIR
-
-To clone PhaseDancer repository, the following line should be executed:
-
-```
-git clone https://github.com/bposzewiecka/phaseDancer.git
-```
-
-To set environment variable  PHASEDANCER_DIR the following line should be executed:
-
-```
-export PHASEDANCER_DIR=`pwd`/phaseDancer
-```
-
-### Step 3: Creating directory with sample data and setting environment variable PHASEDANCER_DATA_DIR
+### Step 1: Creating directory with sample data
 
 Dictionary for storing the sequencing data of a certain sample should be created in the **data** dictionary.
 Name of the dictionary should be descriptive and **should start with a letter and contain letters, numbers and hyphens only**.
@@ -41,7 +16,6 @@ Name of the dictionary should be descriptive and **should start with a letter an
 For example, the following commands:
 
 ```
-export PHASEDANCER_DATA_DIR=`pwd`
 mkdir -p data/chaos-pb-sequel
 ```
 
@@ -57,8 +31,13 @@ mv ~/SAMPLE1234.fastq data/chaos-pb-sequel/chaos-pb-sequel.fastq
 ```
 
 can be executed to place input file *SAMPLE1234.fastq* with sequenced genome from home directory in the appropriate phaseDancer sequencing data directory.
+Alternatively, symbolic link to such file can be used.
 
-### Step 4: Creating sub-directories for start contigs to extend
+```
+ln -s ~/SAMPLE1234.fastq data/chaos-pb-sequel/chaos-pb-sequel.fastq
+```
+
+### Step 2: Creating sub-directories for start contigs to extend
 
 For every contig that will be extended by the algorithm one sub-directory should be created.
 Inside each sub-directory a start contig sequence in fasta format should be placed.
@@ -79,7 +58,7 @@ mv ~/tel2Bp.fasta data/chaos-pb-sequel/telomere2Bp/telomere2Bp.fasta
 
 can be executed to place start contig tel2Aq.fasta and tel2Bp.fasta from the home directory in the appropriate phaseDancer data sub-directory.
 
-### Step 5: Creating configuration file
+### Step 3: Creating configuration file
 
 Configuration file **config.yaml** list inputs for the PhaseDancer algorithm.
 Tree structure of the file enables to list all samples and contigs to extend together with the parameters of the algorithm.
