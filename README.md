@@ -1,6 +1,5 @@
 # PhaseDancer
 
-##  Workflow of the algorithm
 
 ![Diagram showing PhaseDancer algorithm workflow](/images/PHASEDANCER.png?raw=true "PhaseDancer algorithm workflow")
 
