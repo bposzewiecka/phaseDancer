@@ -196,6 +196,15 @@ In case of the example input data structure should have following structure:
    └─── telomere2Bp
        └─── telomere2Bp.fasta
 ```
+### Step 5: Runninh the docker container
+
+Befere starting the main algorithm  docker container shoul be run using following command:
+
+```
+docker run -d -v  /path/to/data:/phaseDancerData -it --name phasedancer bposzewiecka/phasedancer:1.0
+```
+
+with ' /path/to/data' replacded by the absolute path to the dictionary containing data.
 
 ### Step 4: : Starting the PhaseDancer algorithm
 
@@ -205,6 +214,7 @@ To start the main algorithm, the following line of code should be executed with 
 docker exec phase_dancer ./run_phaseDancer.sh sample_name cotig_name|all number_of_indices number_of_threads
 ```
 For example, following command will execute concurrent assembly of all contigs listed in config.yaml file for the sample chaos-pb-sequel, i.e . telomere2Aq, telomere2Bp using 10 processors and 1 index.
+
 ```
  docker exec phase_dancer ./run_phaseDancer.sh chaos-pb-sequel all 1 10
 ```
