@@ -209,12 +209,12 @@ with ' /path/to/data' replaced by the absolute path to the dictionary containing
 To start the main algorithm, the following line of code should be executed with the *number_of_threads* replaced by the maximum number of threads that algorithm can use and *sample_name* with the name of the sample, contig_name with the name of the contig or string “all”.
 
 ```
-docker exec phase_dancer ./run_phaseDancer.sh sample_name cotig_name|all number_of_indices number_of_threads
+docker exec phasedancer ./run_phaseDancer.sh sample_name cotig_name|all number_of_indices number_of_threads
 ```
 For example, following command will execute concurrent assembly of all contigs listed in config.yaml file for the sample chaos-pb-sequel, i.e . telomere2Aq, telomere2Bp using 10 processors and 1 index.
 
 ```
- docker exec phase_dancer ./run_phaseDancer.sh chaos-pb-sequel all 1 10
+ docker exec phasedancer ./run_phaseDancer.sh chaos-pb-sequel all 1 10
 ```
 
 ### Step 5: Unloading indices from RAM memory
@@ -228,7 +228,7 @@ docker exec phase_dancer ./unload_index.sh sample_name number_of_indices
 For example, to unload the minimap index from RAM memory of chaos-pb-sequel sample, the following line of code should be executed:
 
 ```
-docker exec phase_dancer ./unload_index.sh chaos-pb-sequel 1
+docker exec phasedancer ./unload_index.sh chaos-pb-sequel 1
 ```
 
 ### Step 6: Stopping and removing the docker container
@@ -236,8 +236,8 @@ docker exec phase_dancer ./unload_index.sh chaos-pb-sequel 1
 After completion of the algorithm the docker container should be stopped and removed.
 
 ```
-docker stop phase_dancer
-docker rm
+docker stop phasedancer
+docker rm phasedancer
 ```
 
 ##  PhaseDancerViewer
