@@ -186,7 +186,7 @@ The input data for the algorithm should have following structure:
        └─── contig-name_n.fasta       
 ```
 
-In case of the example:
+In case of the example input data structure should have following structure:
    
 ```
 │  config.yaml
