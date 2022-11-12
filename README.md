@@ -13,7 +13,7 @@ If you do not have docker installed, please check [https://docs.docker.com/engin
 ./example.sh
 ```
 
-You can view the results of every iteration of the assembly using [PhaseDancerViewer](https://github.com/bposzewiecka/phaseDancerViewer)  application on [http://127.0.0.1:8000/](http://127.0.0.1:8000/).  When you finish execute following commands:
+You can view the results of every iteration of the assembly using [PhaseDancerViewer](https://github.com/bposzewiecka/phaseDancerViewer)  application on [http://127.0.0.1:8000/](http://127.0.0.1:8000/).  When you finish execute the following commands:
 
 ```
 docker stop phasedancer_viewer
