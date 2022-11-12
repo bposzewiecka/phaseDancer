@@ -240,9 +240,9 @@ docker stop phasedancer
 docker rm phasedancer
 ```
 
-# Step 7: Retrieving data
+### Step 7: Retrieving data
 
-After the successful assembly sequences are placed in `data/name_of_sample/name_of_contig/minimap2/nc_000/merged_contigs`.
+After the successful assembly sequences are placed in `data/name_of_sample/name_of_contig/minimap2/nc_000/merged_contigs` directory.
 
 ##  PhaseDancerViewer
 
