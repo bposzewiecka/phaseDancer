@@ -195,7 +195,7 @@ In case of the example input data structure should have following structure:
    └─── telomere2Bp
        └─── telomere2Bp.fasta
 ```
-### Step 5: Runninh the docker container
+### Step 5: Running the docker container
 
 Befere starting the main algorithm  docker container shoul be run using following command:
 
