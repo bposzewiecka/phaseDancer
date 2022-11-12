@@ -129,8 +129,8 @@ samples:
 For example, the following *yaml* file can be created for sample *chaos-pb-sequel*, and two contigs to extend (*telomere2Aq*, *telomere2Bp*).
 In this case technology used to sequence the data is Pacbio Sequel (attribute *technology* is set to *pb*).
 Parameters *technology*, *contig-size*, *contig-extension-size*, *browser*, *iterations* are set for all contigs at the level of sample.
-Parameters *contig-extension-size* and *iterations* are overridden in the case of contig *telomere2Aq*.
-Parameters *igv-screenshots: true* and *iterations* are overridden in the case of contig *telomere2Bp*.
+Parameters *contig-extension-size* is overridden in the case of contig *telomere2Aq*.
+Parameters *iterations" is overridden in the case of contig *telomere2Bp*.
 
 ```yaml
 samples:
@@ -143,7 +143,6 @@ samples:
         mappings: [ hg38, panTro6 ]
         contigs:
             telomere2Aq:
-                iterations: 40
                 contig-extension-size: 6000
             telomere2Bp:
                 iterations: 40
