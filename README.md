@@ -53,13 +53,13 @@ Alternatively, symbolic link to such file can be used.
 ln -s ~/SAMPLE1234.fastq data/chaos-pb-sequel/chaos-pb-sequel.fastq
 ```
 
-### Step 2: Creating sub-directories for start contigs to extend
+### Step 2: Creating sub-directories for initial contigs to extend
 
 For every contig that will be extended by the algorithm one sub-directory should be created.
-Inside each sub-directory a start contig sequence in fasta format should be placed.
-The name of the start contig should be the same as the name of the corresponding sub-directory (ie. if sub-dictionary name is *telomere2Bp*, the fasta file inside it should have name *telomere2Bp.fasta*).
+Inside each sub-directory a initial contig sequence in fasta format should be placed.
+The name of the initial contig should be the same as the name of the corresponding sub-directory (ie. if sub-dictionary name is *telomere2Bp*, the fasta file inside it should have name *telomere2Bp.fasta*).
 Name of the sub-dictionary should be descriptive and **should start with a letter and contain letters, numbers and hyphens only**.
-One directory for data associated with a certain sample can contain several sub-directories for start contigs.
+One directory for data associated with a certain sample can contain several sub-directories for initial contigs.
 
 For example, the following commands:
 
@@ -72,7 +72,7 @@ mkdir -p data/chaos-pb-sequel/telomere2Bp
 mv ~/tel2Bp.fasta data/chaos-pb-sequel/telomere2Bp/telomere2Bp.fasta
 ```
 
-can be executed to place start contig tel2Aq.fasta and tel2Bp.fasta from the home directory in the appropriate phaseDancer data sub-directory.
+can be executed to place initial contig tel2Aq.fasta and tel2Bp.fasta from the home directory in the appropriate phaseDancer data sub-directory.
 
 ### Step 3: Creating configuration file
 
@@ -81,7 +81,7 @@ Tree structure of the file enables to list all samples and contigs to extend tog
 
 Root element is *samples* dictionary that contains configuration for every sample by its name.
 For every sample *technology* and *contigs* property should be specified.
-For each sample all start contigs should be listed as a dictionary (where keys are start contig names and values are properties overriding those declared at the sample level) or a list of start contig names.
+For each sample all initial contigs should be listed as a dictionary (where keys are initial contig names and values are properties overriding those declared at the sample level) or a list of initial contig names.
 All properties except  *technology* and *contigs* can be specified at the level of sample and contig.
 When property is specified on both levels, property value specified at the contig level overrides property value from the sample level.
 
@@ -150,7 +150,7 @@ samples:
 ```
 
 For example, the following *yaml* file can be created for sample *chaos-pb-sequel*, and two contigs to extend (*telomere2Aq*, *telomere2Bp*).
-All parameters are set at the sample level and property *contigs* contain list of start contigs.
+All parameters are set at the sample level and property *contigs* contain list of initial contigs.
 
 ```yaml
 samples:
