@@ -196,7 +196,7 @@ In case of the example input data should have following structure:
 ```
 ### Step 5: Running the docker container
 
-Before starting the main algorithm  docker container shoul be run using following command:
+Before starting the main algorithm  docker container should be run using following command:
 
 ```
 docker run -d -v  /path/to/data:/phaseDancerData -it --name phasedancer bposzewiecka/phasedancer:1.0
@@ -240,6 +240,10 @@ docker stop phasedancer
 docker rm phasedancer
 ```
 
+# Step 7: Retrieving data
+
+After the successful assembly sequences are placed in `data/name_of_sample/name_of_contig/minimap2/nc_000/merged_contigs`.
+
 ##  PhaseDancerViewer
 
 PhaseDancerViewer is an application for visualizing the results of every iteration of the PhaseDancer algorithm.
@@ -249,9 +253,4 @@ More information about the PhaseDancerViewer application can be found on [https:
 ![Image PhaseDancerViewer application](/images/phaseDancerViewer.png?raw=true "PhaseDancerViewer application")
 
 Author: Barbara Poszewiecka
-
-
-
-
-
 
