@@ -171,7 +171,7 @@ The input data for the algorithm should have following structure:
 |   ├───  contig-name1
 |   |   └───  contig-name1.fasta
 |   ├─── contig-name2
-|       └─── contig-name2.fasta 
+|       └─── contig-name2.fasta
 |   ...    
 |   └─── contig-name2_n
 |       └─── contig-name_n.fasta        
@@ -179,7 +179,7 @@ The input data for the algorithm should have following structure:
    ├───  contig-name1
    |   └───  contig-name1.fasta
    ├─── contig-name2
-       └─── contig-name2.fasta 
+       └─── contig-name2.fasta
    ...    
    └─── contig-name2_n
        └─── contig-name_n.fasta       
@@ -197,13 +197,13 @@ In case of the example input data should have following structure:
 ```
 ### Step 5: Running the docker container
 
-Befere starting the main algorithm  docker container shoul be run using following command:
+Before starting the main algorithm  docker container shoul be run using following command:
 
 ```
 docker run -d -v  /path/to/data:/phaseDancerData -it --name phasedancer bposzewiecka/phasedancer:1.0
 ```
 
-with ' /path/to/data' replacded by the absolute path to the dictionary containing data.
+with ' /path/to/data' replaced by the absolute path to the dictionary containing data.
 
 ### Step 4: : Starting the PhaseDancer algorithm
 
@@ -232,12 +232,13 @@ For example, to unload the minimap index from RAM memory of chaos-pb-sequel samp
 docker exec phase_dancer ./unload_index.sh chaos-pb-sequel 1
 ```
 
-### Step 6: Stopping the docker container
+### Step 6: Stopping and removing the docker container
 
-After completion of the algorithm the docker container should be stopped
+After completion of the algorithm the docker container should be stopped and removed.
 
 ```
 docker stop phase_dancer
+docker rm
 ```
 
 ##  PhaseDancerViewer
@@ -249,6 +250,8 @@ More information about the PhaseDancerViewer application can be found on [https:
 ![Image PhaseDancerViewer application](/images/phaseDancerViewer.png?raw=true "PhaseDancerViewer application")
 
 Author: Barbara Poszewiecka
+
+
 
 
 
